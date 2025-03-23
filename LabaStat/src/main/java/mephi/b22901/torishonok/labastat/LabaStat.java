@@ -26,14 +26,14 @@ import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 public class LabaStat {
 
     public static void main(String[] args) {
-        Model model = new Model();
-        View view = new View();
-        Controller controller = new Controller(model, view);
+         Model model = new Model();
+        Controller controller = new Controller(model);
+        View view = new View(controller, model); // Передаем контроллер и модель в View
+        controller.setView(view);
         
         view.addImportListener(e -> view.showImportDialog());
         view.addExportListener(e -> {
-            // Логика для экспорта данных
-            JOptionPane.showMessageDialog(view.getMainFrame(), "Экспорт данных не реализован.");
+            // Здесь должна быть логика экспорта данных
         });
         view.addExitListener(e -> System.exit(0));
 

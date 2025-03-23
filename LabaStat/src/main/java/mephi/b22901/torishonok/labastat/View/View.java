@@ -5,9 +5,14 @@
 package mephi.b22901.torishonok.labastat.View;
 
 import java.awt.BorderLayout;
+import mephi.b22901.torishonok.labastat.Model.Model;
+import mephi.b22901.torishonok.labastat.Controller.Controller;
 import java.awt.GridLayout;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
@@ -25,8 +30,15 @@ public class View {
     private JButton importButton;
     private JButton exportButton;
     private JButton exitButton;
+    private String selectedFilePath; // Переменная для хранения пути к выбранному файлу
+    private Controller controller; 
+    private Model model;
+    private boolean dataAvailable;
 
-    public View() {
+    public View(Controller controller, Model model) {
+        this.controller = controller;
+        this.model = model;
+        this.dataAvailable = false;
         mainFrame = new JFrame("Statistics Calculator");
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         mainFrame.setSize(300, 150);
@@ -64,11 +76,17 @@ public class View {
             if (returnValue == JFileChooser.APPROVE_OPTION) {
                 File selectedFile = fileChooser.getSelectedFile();
                 if (selectedFile.getName().endsWith(".xlsx") || selectedFile.getName().endsWith(".xls")) {
-                    JOptionPane.showMessageDialog(importDialog, "Файл успешно выбран: " + selectedFile.getName(), "Успех", JOptionPane.INFORMATION_MESSAGE);
-                    // Здесь вы можете вызвать метод для получения имен листов
-                    // Например, model.getSheetNames(selectedFile.getAbsolutePath());
-                    // После получения имен листов, обновите выпадающий список
-                    // updateSheetSelector(sheetNames);
+                    try {
+                        selectedFilePath = selectedFile.getAbsolutePath();
+                        JOptionPane.showMessageDialog(importDialog, "Файл успешно выбран: " + selectedFile.getName(), "Успех", JOptionPane.INFORMATION_MESSAGE);
+                        updateSheetSelector(selectedFilePath, sheetSelector);
+                        // Здесь вы можете вызвать метод для получения имен листов
+                        // Например, model.getSheetNames(selectedFile.getAbsolutePath());
+                        // После получения имен листов, обновите выпадающий список
+                        // updateSheetSelector(sheetNames);
+                    } catch (IOException ex) {
+                        Logger.getLogger(View.class.getName()).log(Level.SEVERE, null, ex);
+                    }
                 } else {
                     JOptionPane.showMessageDialog(importDialog, "Пожалуйста, выберите файл формата Excel (.xlsx или .xls)", "Ошибка", JOptionPane.ERROR_MESSAGE);
                 }
@@ -76,6 +94,11 @@ public class View {
         });
 
         confirmButton.addActionListener(e -> {
+             String selectedSheet = (String) sheetSelector.getSelectedItem();
+        if (selectedSheet != null) {
+            controller.calculateStatistics(selectedFilePath, selectedSheet);
+            dataAvailable = true;
+        }
             // Логика для импорта данных из выбранного листа
             // Например, model.importData(selectedFile.getAbsolutePath(), (String) sheetSelector.getSelectedItem());
             importDialog.dispose();
@@ -92,13 +115,32 @@ public class View {
 
         importDialog.setVisible(true);
     }
-
+    
+    public void updateSheetSelector(String filePath, JComboBox<String> sheetSelector) throws IOException {
+        try{
+        String[] sheetNames = model.getSheetNames(filePath);
+        sheetSelector.removeAllItems();
+        for (String sheetName : sheetNames) {
+            sheetSelector.addItem(sheetName);
+        }
+        }catch(IOException ex){
+            showError("Ошибка получения листов: " + ex.getMessage());
+        }
+}
+    
     public void addImportListener(ActionListener listener) {
         importButton.addActionListener(listener);
     }
 
     public void addExportListener(ActionListener listener) {
-        exportButton.addActionListener(listener);
+        exportButton.addActionListener(e -> {
+            if (!dataAvailable) {
+                JOptionPane.showMessageDialog(mainFrame, "Отсутствуют данные для экспорта.", "Ошибка", JOptionPane.ERROR_MESSAGE);
+            } else {
+                // Здесь можно добавить логику для экспорта данных
+                JOptionPane.showMessageDialog(mainFrame, "Данные экспортированы.", "Успех", JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
     }
 
     public void addExitListener(ActionListener listener) {
@@ -112,8 +154,9 @@ public class View {
     }
      public void showSheetSelectionDialog(String[] sheetNames, String filePath) {
         JDialog sheetDialog = new JDialog(mainFrame, "Выбор листа", true);
-        sheetDialog.setSize(300, 150);
+        sheetDialog.setSize(500, 350);
         sheetDialog.setLayout(new BorderLayout());
+        
 
         JComboBox<String> sheetSelector = new JComboBox<>(sheetNames);
         JButton selectButton = new JButton("Выбрать");

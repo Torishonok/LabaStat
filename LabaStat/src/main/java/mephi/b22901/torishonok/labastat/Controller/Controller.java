@@ -19,18 +19,13 @@ public class Controller {
    private Model model;
     private View view;
 
-    public Controller(Model model, View view) {
+    public Controller(Model model) {
         this.model = model;
+        }
+    public void setView(View view) {
         this.view = view;
-
-        // Обработчик для импорта данных
-        view.addImportListener(new ImportListener());
-        // Обработчик для экспорта данных
-        view.addExportListener(new ExportListener());
-        // Обработчик для выхода из приложения
-        view.addExitListener(e -> System.exit(0));
     }
-
+ 
     private class ImportListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -39,13 +34,13 @@ public class Controller {
         }
     }
 
-    private class ExportListener implements ActionListener {
-        @Override
-        public void actionPerformed(ActionEvent e) {
+   //private class ExportListener implements ActionListener {
+        //@Override
+        //public void actionPerformed(ActionEvent e) {
             // Логика для экспорта данных
-            JOptionPane.showMessageDialog(view.getMainFrame(), "Экспорт данных не реализован.");
-        }
-    }
+            //JOptionPane.showMessageDialog(view.getMainFrame(), "Экспорт данных не реализован.");
+        //}
+    //} 
 
     public void updateSheetSelector(String filePath) {
         try {
@@ -55,4 +50,32 @@ public class Controller {
             view.showError("Ошибка получения листов: " + ex.getMessage());
         }
     }
+    public void calculateStatistics(String filePath, String sheetName) {
+        try {
+            model.importData(filePath, sheetName);
+            double[] means = model.calculateMean();
+            double[] geometricMeans = model.calculateGeometricMean();
+            double[] stdDevs = model.calculateStandardDeviation();
+            double[] ranges = model.calculateRange();
+            double[][] covariances = model.calculateCovariance();
+            int[] counts = model.countElements();
+            double[] coeffOfVariation = model.calculateCoefficientOfVariation();
+            double[][] confidenceIntervals = model.calculateConfidenceInterval(0.95); // 95% доверительный интервал
+            double[] variances = model.calculateVariance();
+            double[] maxValues = model.calculateMax();
+            double[] minValues = model.calculateMin();
+
+            String outputFileName = JOptionPane.showInputDialog(view.getMainFrame(), "Введите имя для нового файла (без расширения):");
+            if (outputFileName != null && !outputFileName.trim().isEmpty()) {
+                String outputFilePath = outputFileName + ".xlsx";
+                model.exportResults(outputFilePath, means, geometricMeans, stdDevs, ranges, covariances, counts, coeffOfVariation, confidenceIntervals, variances, maxValues, minValues);
+                JOptionPane.showMessageDialog(view.getMainFrame(), "Результаты успешно сохранены в " + outputFilePath, "Успех", JOptionPane.INFORMATION_MESSAGE);
+            }
+
+            
+        } catch (IOException ex) {
+            view.showError("Ошибка импорта данных: " + ex.getMessage());
+        }
+    }
+    
 }

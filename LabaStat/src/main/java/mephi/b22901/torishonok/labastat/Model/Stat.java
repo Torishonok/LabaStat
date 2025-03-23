@@ -11,106 +11,164 @@ import java.util.Arrays;
  * @author vikus
  */
 public class Stat {
+    public static double[] calculateMean(double[][] data) {
+        int columnCount = data[0].length;
+        double[] means = new double[columnCount];
 
-    // 1. Среднее геометрическое
-    public static double geometricMean(double[] sample) {
-        double product = 1.0;
-        for (double num : sample) {
-            product *= num;
+        for (int col = 0; col < columnCount; col++) {
+            double sum = 0;
+            for (double[] row : data) {
+                sum += row[col];
+            }
+            means[col] = sum / data.length;
         }
-        return Math.pow(product, 1.0 / sample.length);
+        return means;
     }
 
-    // 2. Среднее арифметическое
-    public static double arithmeticMean(double[] sample) {
-        double sum = 0.0;
-        for (double num : sample) {
-            sum += num;
+    public static double[] calculateGeometricMean(double[][] data) {
+        int columnCount = data[0].length;
+        double[] geometricMeans = new double[columnCount];
+
+        for (int col = 0; col < columnCount; col++) {
+            double product = 1;
+            for (double[] row : data) {
+                product *= row[col];
+            }
+            geometricMeans[col] = Math.pow(product, 1.0 / data.length);
         }
-        return sum / sample.length;
+        return geometricMeans;
     }
 
-    // 3. Оценка стандартного отклонения
-    public static double standardDeviation(double[] sample) {
-        double mean = arithmeticMean(sample);
-        double sum = 0.0;
-        for (double num : sample) {
-            sum += Math.pow(num - mean, 2);
+    public static double[] calculateStandardDeviation(double[][] data) {
+        int columnCount = data[0].length;
+        double[] stdDevs = new double[columnCount];
+
+        for (int col = 0; col < columnCount; col++) {
+            double mean = calculateMean(data)[col];
+            double sum = 0;
+            for (double[] row : data) {
+                sum += Math.pow(row[col] - mean, 2);
+            }
+            stdDevs[col] = Math.sqrt(sum / data.length);
         }
-        return Math.sqrt(sum / (sample.length - 1));
+        return stdDevs;
     }
 
-    // 4. Размах выборки
-    public static double range(double[] sample) {
-        double min = Arrays.stream(sample).min().orElse(Double.NaN);
-        double max = Arrays.stream(sample).max().orElse(Double.NaN);
-        return max - min;
-    }
+    public static double[] calculateRange(double[][] data) {
+        int columnCount = data[0].length;
+        double[] ranges = new double[columnCount];
 
-    // 5. Коэффициенты ковариации для всех пар
-    public static double covariance(double[] sample1, double[] sample2) {
-        if (sample1.length != sample2.length) {
-            throw new IllegalArgumentException("Выборки должны быть одинаковой длины.");
+        for (int col = 0; col < columnCount; col++) {
+            double min = Double.MAX_VALUE;
+            double max = Double.MIN_VALUE;
+            for (double[] row : data) {
+                double value = row[col];
+                if (value < min) min = value;
+                if (value > max) max = value;
+            }
+            ranges[col] = max - min;
         }
-        double mean1 = arithmeticMean(sample1);
-        double mean2 = arithmeticMean(sample2);
-        double covariance = 0.0;
-        for (int i = 0; i < sample1.length; i++) {
-            covariance += (sample1[i] - mean1) * (sample2[i] - mean2);
+        return ranges;
+    }
+     public static double[][] calculateCovariance(double[][] data) {
+        int columnCount = data[0].length;
+        double[][] covariances = new double[columnCount][columnCount];
+
+        for (int i = 0; i < columnCount; i++) {
+            for (int j = 0; j < columnCount; j++) {
+                double meanX = calculateMean(data)[i];
+                double meanY = calculateMean(data)[j];
+                double covariance = 0;
+                for (double[] row : data) {
+                    covariance += (row[i] - meanX) * (row[j] - meanY);
+                }
+                covariances[i][j] = covariance / data.length;
+            }
         }
-        return covariance / (sample1.length - 1);
+        return covariances;
     }
 
-    // 6. Количество элементов
-    public static int count(double[] sample) {
-        return sample.length;
-    }
+    public static int[] countElements(double[][] data) {
+        int[] counts = new int[data[0].length]; // Массив для хранения количества элементов в каждом столбце
 
-    // 7. Коэффициент вариации
-    public static double coefficientOfVariation(double[] sample) {
-        return standardDeviation(sample) / arithmeticMean(sample);
-    }
+    // Инициализируем массив counts
+    for (int i = 0; i < counts.length; i++) {
+        counts[i] = data.length;
+         }
 
-    // 8. Доверительный интервал для мат. ожидания
-    public static double[] confidenceInterval(double[] sample, double confidenceLevel) {
-        double mean = arithmeticMean(sample);
-        double stdDev = standardDeviation(sample);
-        double tScore = 1.96; // Для 95% доверительного интервала
-        double marginError = tScore * stdDev / Math.sqrt(sample.length);
-        return new double[]{mean - marginError, mean + marginError};
+    return counts;
     }
+    
 
-    // 9. Оценка дисперсии
-    public static double varianceEstimate(double[] sample) {
-        double mean = arithmeticMean(sample);
-        double sum = 0.0;
-        for (double num : sample) {
-            sum += Math.pow(num - mean, 2);
+    public static double[] calculateCoefficientOfVariation(double[][] data) {
+        double[] means = calculateMean(data);
+        double[] stdDevs = calculateStandardDeviation(data);
+        double[] coefficientsOfVariation = new double[means.length];
+
+        for (int i = 0; i < means.length; i++) {
+            coefficientsOfVariation[i] = (stdDevs[i] / means[i]) * 100; // В процентах
         }
-        return sum / (sample.length - 1);
+        return coefficientsOfVariation;
     }
 
-    // 10. Максимумы и минимумы
-    public static double[] minMax(double[] sample) {
-        double min = Arrays.stream(sample).min().orElse(Double.NaN);
-        double max = Arrays.stream(sample).max().orElse(Double.NaN);
-        return new double[]{min, max};
+    public static double[][] calculateConfidenceInterval(double[][] data, double confidenceLevel) {
+        double[][] confidenceIntervals = new double[data[0].length][2]; // [0] - нижняя граница, [1] - верхняя граница
+        double z = 1.96; // Для 95% доверительного интервала
+
+        double[] means = calculateMean(data);
+        double[] stdDevs = calculateStandardDeviation(data);
+        int n = data.length;
+
+        for (int i = 0; i < means.length; i++) {
+            double marginOfError = z * (stdDevs[i] / Math.sqrt(n));
+            confidenceIntervals[i][0] = means[i] - marginOfError; // Нижняя граница
+            confidenceIntervals[i][1] = means[i] + marginOfError; // Верхняя граница
+        }
+        return confidenceIntervals;
     }
 
-    //public static void main(String[] args) {
-        //double[] sample1 = {2.3, 3.5, 1.8, 4.5, 2.8};
-        //double[] sample2 = {1.3, 2.4, 2.5, 3.7, 1.9};
+    public static double[] calculateVariance(double[][] data) {
+        double[] variances = new double[data[0].length];
+        for (int i = 0; i < variances.length; i++) {
+            double mean = calculateMean(data)[i];
+            double sum = 0;
+            for (double[] row : data) {
+                sum += Math.pow(row[i] - mean, 2);
+            }
+            variances[i] = sum / data.length; // Оценка дисперсии
+        }
+        return variances;
+    }
 
-        //System.out.println("Среднее геометрическое: " + geometricMean(sample1));
-        //System.out.println("Среднее арифметическое: " + arithmeticMean(sample1));
-        //System.out.println("Стандартное отклонение: " + standardDeviation(sample1));
-        //System.out.println("Размах: " + range(sample1));
-        //System.out.println("Коэффициент ковариации: " + covariance(sample1, sample2));
-        //System.out.println("Количество элементов: " + count(sample1));
-        //System.out.println("Коэффициент вариации: " + coefficientOfVariation(sample1));
-        //System.out.println("Доверительный интервал: " + Arrays.toString(confidenceInterval(sample1, 0.95)));
-        //System.out.println("Оценка дисперсии: " + varianceEstimate(sample1));
-        //System.out.println("Минимум и максимум: " + Arrays.toString(minMax(sample1)));
-    //}
+    public static double[] calculateMax(double[][] data) {
+    double[] maxValues = new double[data[0].length];
+    for (int i = 0; i < maxValues.length; i++) {
+        double max = Double.NEGATIVE_INFINITY; // Начальное значение
+        for (double[] row : data) {
+            if (row[i] > max) {
+                max = row[i];
+            }
+        }
+        maxValues[i] = max;
+    }
+    return maxValues;
+}
+
+    public static double[] calculateMin(double[][] data) {
+    double[] minValues = new double[data[0].length];
+    for (int i = 0; i < minValues.length; i++) {
+        double min = Double.POSITIVE_INFINITY; // Начальное значение
+        for (double[] row : data) {
+            if (row[i] < min) {
+                min = row[i];
+            }
+        }
+        minValues[i] = min;
+    }
+    return minValues;
+}
+    
+
+    
 }
 
