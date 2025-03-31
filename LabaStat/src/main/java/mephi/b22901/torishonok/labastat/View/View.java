@@ -30,7 +30,7 @@ public class View {
     private JButton importButton;
     private JButton exportButton;
     private JButton exitButton;
-    private String selectedFilePath; // Переменная для хранения пути к выбранному файлу
+    private String selectedFilePath; 
     private Controller controller; 
     private Model model;
     private boolean dataAvailable;
@@ -70,25 +70,21 @@ public class View {
             fileChooser.setDialogTitle("Выберите файл Excel");
             fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
             fileChooser.setAcceptAllFileFilterUsed(false);
-            fileChooser.addChoosableFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Excel Files", "xlsx", "xls"));
+            fileChooser.addChoosableFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Excel Files", "xlsx"));
 
             int returnValue = fileChooser.showOpenDialog(importDialog);
             if (returnValue == JFileChooser.APPROVE_OPTION) {
                 File selectedFile = fileChooser.getSelectedFile();
-                if (selectedFile.getName().endsWith(".xlsx") || selectedFile.getName().endsWith(".xls")) {
+                if (selectedFile.getName().endsWith(".xlsx")) {
                     try {
                         selectedFilePath = selectedFile.getAbsolutePath();
                         JOptionPane.showMessageDialog(importDialog, "Файл успешно выбран: " + selectedFile.getName(), "Успех", JOptionPane.INFORMATION_MESSAGE);
                         updateSheetSelector(selectedFilePath, sheetSelector);
-                        // Здесь вы можете вызвать метод для получения имен листов
-                        // Например, model.getSheetNames(selectedFile.getAbsolutePath());
-                        // После получения имен листов, обновите выпадающий список
-                        // updateSheetSelector(sheetNames);
                     } catch (IOException ex) {
                         Logger.getLogger(View.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 } else {
-                    JOptionPane.showMessageDialog(importDialog, "Пожалуйста, выберите файл формата Excel (.xlsx или .xls)", "Ошибка", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(importDialog, "Пожалуйста, выберите файл формата Excel (.xlsx )", "Ошибка", JOptionPane.ERROR_MESSAGE);
                 }
             }
         });
@@ -99,8 +95,6 @@ public class View {
             controller.calculateStatistics(selectedFilePath, selectedSheet);
             dataAvailable = true;
         }
-            // Логика для импорта данных из выбранного листа
-            // Например, model.importData(selectedFile.getAbsolutePath(), (String) sheetSelector.getSelectedItem());
             importDialog.dispose();
         });
 
@@ -128,6 +122,15 @@ public class View {
         }
 }
     
+    public void updateSheetSelector(String filePath) {
+        try {
+            String[] sheetNames = model.getSheetNames(filePath);
+            showSheetSelectionDialog(sheetNames, filePath);
+        } catch (IOException ex) {
+            showError("Ошибка получения листов: " + ex.getMessage());
+        }
+    }
+    
     public void addImportListener(ActionListener listener) {
         importButton.addActionListener(listener);
     }
@@ -137,7 +140,6 @@ public class View {
             if (!dataAvailable) {
                 JOptionPane.showMessageDialog(mainFrame, "Отсутствуют данные для экспорта.", "Ошибка", JOptionPane.ERROR_MESSAGE);
             } else {
-                // Здесь можно добавить логику для экспорта данных
                 JOptionPane.showMessageDialog(mainFrame, "Данные экспортированы.", "Успех", JOptionPane.INFORMATION_MESSAGE);
             }
         });
@@ -146,8 +148,19 @@ public class View {
     public void addExitListener(ActionListener listener) {
         exitButton.addActionListener(listener);
     }
+    public void exportResults(String outputFileName, double[] means, double[] geometricMeans, double[] stdDevs, double[] ranges,double[][] covariances, int[] counts, double[] coeffOfVariation, double[][] confidenceIntervals, double[] variances, double[] maxValues, double[] minValues ) throws IOException {
+            if (outputFileName != null && !outputFileName.trim().isEmpty()) {
+                String outputFilePath = outputFileName + ".xlsx";
+                try{
+                model.exportResults(outputFilePath, means, geometricMeans, stdDevs, ranges, covariances, counts, coeffOfVariation, confidenceIntervals, variances, maxValues, minValues);
+                JOptionPane.showMessageDialog(getMainFrame(), "Результаты успешно сохранены в " + outputFilePath, "Успех", JOptionPane.INFORMATION_MESSAGE);
+        } catch (IOException ex) {
+            showError("Ошибка импорта данных: " + ex.getMessage());
+        }
+       }
+    }
      public JFrame getMainFrame() {
-        return mainFrame; // Возвращаем основное окно
+        return mainFrame; 
     }
      public void showError(String message) {
         JOptionPane.showMessageDialog(mainFrame, message, "Ошибка", JOptionPane.ERROR_MESSAGE);
@@ -164,8 +177,6 @@ public class View {
 
         selectButton.addActionListener(e -> {
             String selectedSheet = (String) sheetSelector.getSelectedItem();
-            // Здесь вы можете вызвать метод для импорта данных из выбранного листа
-            // Например, model.importData(filePath, selectedSheet);
             JOptionPane.showMessageDialog(sheetDialog, "Выбран лист: " + selectedSheet, "Успех", JOptionPane.INFORMATION_MESSAGE);
             sheetDialog.dispose();
         });

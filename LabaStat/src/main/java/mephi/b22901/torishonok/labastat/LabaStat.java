@@ -28,12 +28,12 @@ public class LabaStat {
     public static void main(String[] args) {
          Model model = new Model();
         Controller controller = new Controller(model);
-        View view = new View(controller, model); // Передаем контроллер и модель в View
+        View view = new View(controller, model); 
         controller.setView(view);
         
         view.addImportListener(e -> view.showImportDialog());
         view.addExportListener(e -> {
-            // Здесь должна быть логика экспорта данных
+            
         });
         view.addExitListener(e -> System.exit(0));
 
